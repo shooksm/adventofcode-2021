@@ -1,0 +1,30 @@
+{
+  "name": "adventofcode-2021",
+  "version": "1.0.0",
+  "description": "My solutions for Advent of Code 2021",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shooksm/adventofcode-2021.git"
+  },
+  "keywords": [
+    "advent",
+    "of",
+    "code",
+    "fun",
+    "team",
+    "building"
+  ],
+  "author": "Matthew Shooks <shooksm@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shooksm/adventofcode-2021/issues"
+  },
+  "homepage": "https://github.com/shooksm/adventofcode-2021#readme",
+  "devDependencies": {
+    "jest": "^27.4.3"
+  }
+}
