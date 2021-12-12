@@ -62,6 +62,10 @@ class Octopi extends events.EventEmitter {
     }
   }
 
+  toNumber() {
+    return this.#value;
+  }
+
   toString() {
     return this.#value.toString(10);
   }
@@ -103,20 +107,42 @@ const convertToOctopusGrid = (buffer, stepEvent) =>
 
 const printGrid = (grid) => grid.forEach((line) => console.log(line.join('')));
 
+const sumGrid = (grid) =>
+  grid.reduce(
+    (acc, line) =>
+      acc + line.reduce((lineAcc, octopi) => lineAcc + octopi.toNumber(), 0),
+    0
+  );
+
 // Variables
 
-const stepEvent = new StepEvents();
-const octopusGrid = convertToOctopusGrid(input, stepEvent);
-const steps = 100;
+const stepEventPart1 = new StepEvents();
+const octopusGridPart1 = convertToOctopusGrid(input, stepEventPart1);
+const stepsPart1 = 100;
+const stepEventPart2 = new StepEvents();
+const octopusGridPart2 = convertToOctopusGrid(input, stepEventPart2);
+const stepsPart2 = 1000;
 const cushion = 50;
 
 // Loop through all steps giving some cushion for events to finish before each step
-for (let step = 1; step <= steps; step++) {
-  setTimeout(() => stepEvent.emit('step'), step * cushion);
+for (let step = 0; step < stepsPart1; step++) {
+  setTimeout(() => stepEventPart1.emit('step'), step * cushion);
 }
 
 // Wait out all events to print results
 setTimeout(() => {
-  printGrid(octopusGrid);
-  console.log('Part 1', stepEvent.toString());
-}, 1000 + steps * cushion);
+  printGrid(octopusGridPart1);
+  console.log('Part 1', stepEventPart1.toString());
+}, cushion + stepsPart1 * cushion);
+
+// Loop through all steps until all octopus have flashed
+for (let step = 0; step < stepsPart2; step++) {
+  setTimeout(() => {
+    const summedGrid = sumGrid(octopusGridPart2);
+    if (summedGrid === 0) {
+      console.log(`Part 2 all octopus flashed on step ${step}`);
+      process.exit(0);
+    }
+    stepEventPart2.emit('step');
+  }, step * cushion);
+}
