@@ -4,8 +4,8 @@ const events = require('events');
 
 // File Input
 
-// const input = fs.readFileSync('./input.txt');
-const example = fs.readFileSync('./example.txt');
+const input = fs.readFileSync('./input.txt');
+// const example = fs.readFileSync('./example.txt');
 
 // Classes
 
@@ -28,29 +28,42 @@ class StepEvents extends events.EventEmitter {
 }
 
 class Octopi extends events.EventEmitter {
+  #value = 0;
+
+  #stepEvent = null;
+
+  #haveFlashed = false;
+
   constructor(startingValue, stepEvent) {
     super();
-    this.value = +startingValue;
-    this.stepEvent = stepEvent;
+    this.#value = +startingValue;
+    this.#stepEvent = stepEvent;
 
-    this.stepEvent.on('step', () => this.incrementValue());
+    this.#stepEvent.on('step', () => {
+      this.#haveFlashed = false;
+      this.incrementValue();
+    });
   }
 
   incrementValue() {
-    this.value++;
-    if (this.value > 9) {
-      this.value = 0;
+    if (!this.#haveFlashed) {
+      this.#value++;
 
-      // Let the step know I flashed
-      this.stepEvent.incrementFlashes();
+      if (this.#value > 9) {
+        this.#value = 0;
+        this.#haveFlashed = true;
 
-      // Let all my buddies that are around me know I flashed
-      setImmediate(() => this.emit('flash'));
+        // Let the step know I flashed
+        this.#stepEvent.incrementFlashes();
+
+        // Let all my buddies that are around me know I flashed
+        setImmediate(() => this.emit('flash'));
+      }
     }
   }
 
   toString() {
-    return this.value;
+    return this.#value.toString(10);
   }
 }
 
@@ -63,8 +76,8 @@ const convertToOctopusGrid = (buffer, stepEvent) =>
     // First map to establish the Octopi
     .map((line) => line.split('').map((i) => new Octopi(i, stepEvent)))
     // Second map is to bind to adjacent Octopi flash events
-    .map((line, x, octopusGrid) =>
-      line.map((octopi, y) => {
+    .map((line, y, octopusGrid) =>
+      line.map((octopi, x) => {
         // Figure out bounds of adjacent octopi
         const startX = x > 0 ? x - 1 : x;
         const endX = x < line.length - 1 ? x + 1 : x;
@@ -72,10 +85,11 @@ const convertToOctopusGrid = (buffer, stepEvent) =>
         const endY = y < octopusGrid.length - 1 ? y + 1 : y;
 
         // Need to bind myself to my nearest buddies
-        for (let adjacentX = startX; adjacentX <= endX; adjacentX++) {
-          for (let adjacentY = startY; adjacentY <= endY; adjacentY++) {
+        for (let adjacentY = startY; adjacentY <= endY; adjacentY++) {
+          for (let adjacentX = startX; adjacentX <= endX; adjacentX++) {
             // ignore binding to myself
-            if (adjacentX === x && adjacentY === y) break;
+            // eslint-disable-next-line no-continue
+            if (adjacentX === x && adjacentY === y) continue;
 
             octopusGrid[adjacentY][adjacentX].on('flash', () =>
               octopi.incrementValue()
@@ -92,16 +106,17 @@ const printGrid = (grid) => grid.forEach((line) => console.log(line.join('')));
 // Variables
 
 const stepEvent = new StepEvents();
-const octopusGrid = convertToOctopusGrid(example, stepEvent);
-const steps = 2;
+const octopusGrid = convertToOctopusGrid(input, stepEvent);
+const steps = 100;
+const cushion = 50;
 
 // Loop through all steps giving some cushion for events to finish before each step
 for (let step = 1; step <= steps; step++) {
-  setTimeout(() => stepEvent.emit('step'), step * 100);
+  setTimeout(() => stepEvent.emit('step'), step * cushion);
 }
 
 // Wait out all events to print results
 setTimeout(() => {
   printGrid(octopusGrid);
-  console.log(stepEvent.toString());
-}, 1000 + steps * 100);
+  console.log('Part 1', stepEvent.toString());
+}, 1000 + steps * cushion);
